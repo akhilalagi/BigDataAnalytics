@@ -1,0 +1,486 @@
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "eb87f2b0-056c-4600-ac38-5e425017e760",
+   "metadata": {},
+   "source": [
+    "### Create a DataFrame in PySpark by reading data from a CSV file and explore its structure and contents. "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "1339f89c-bf2e-4eba-994e-834a8df2e766",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "\n",
+       "        <div>\n",
+       "            <p><b>SparkContext</b></p>\n",
+       "\n",
+       "            <p><a href=\"http://BharadwajHSKollepara.Dlink:4041\">Spark UI</a></p>\n",
+       "\n",
+       "            <dl>\n",
+       "              <dt>Version</dt>\n",
+       "                <dd><code>v4.0.0</code></dd>\n",
+       "              <dt>Master</dt>\n",
+       "                <dd><code>local[*]</code></dd>\n",
+       "              <dt>AppName</dt>\n",
+       "                <dd><code>PySparkShell</code></dd>\n",
+       "            </dl>\n",
+       "        </div>\n",
+       "        "
+      ],
+      "text/plain": [
+       "<SparkContext master=local[*] appName=PySparkShell>"
+      ]
+     },
+     "execution_count": 1,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "sc"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c1317a60-e29d-4906-9c4d-b5d643f48f82",
+   "metadata": {},
+   "source": [
+    "\n",
+    "## 📊 Dataset Overview\n",
+    "\n",
+    "* Total Records: **50 students**\n",
+    "* Columns: **7** → `id`, `name`, `age`, `gender`, `math`, `science`, `english`\n",
+    "* **No missing values**\n",
+    "\n",
+    "### 👥 Demographics\n",
+    "\n",
+    "* Age: **18 – 25 years** (average ≈ 21.5)\n",
+    "* Gender: **29 Female**, **21 Male**\n",
+    "\n",
+    "### 📚 Academic Performance\n",
+    "\n",
+    "* **Math:**\n",
+    "\n",
+    "  * Range: **40 – 100**\n",
+    "  * Mean: **68.9**\n",
+    "  * Std. Dev.: **17.6** (high variation)\n",
+    "\n",
+    "* **Science:**\n",
+    "\n",
+    "  * Range: **44 – 99**\n",
+    "  * Mean: **70.2**\n",
+    "  * Std. Dev.: **14.6** (moderate variation)\n",
+    "\n",
+    "* **English:**\n",
+    "\n",
+    "  * Range: **42 – 100**\n",
+    "  * Mean: **69.4**\n",
+    "  * Std. Dev.: **18.7** (highest variation)\n",
+    "\n",
+    "###  Key Insights\n",
+    "\n",
+    "* **Science** is the strongest subject on average.\n",
+    "* **English** has the most variation in performance.\n",
+    "* Students perform differently across subjects (not uniform).\n",
+    "\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "1107d617-ac47-478e-a102-2d20950b3c8b",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from pyspark.sql import SparkSession\n",
+    "from pyspark.sql.functions import col, avg, round, max\n",
+    "\n",
+    "# Initialize Spark Session\n",
+    "spark = SparkSession.builder.appName(\"StudentsDataFrameExample\").getOrCreate()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "02ef537c-50c8-4903-b938-f17aa8c4e364",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Step 1: Read CSV file into DataFrame\n",
+    "df = spark.read.csv(\"students.csv\", header=True, inferSchema=True)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "b8c5fbf3-d20c-499d-8e81-9679ec3c0495",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "=== First 10 rows ===\n",
+      "+---+-------+---+------+----+-------+-------+\n",
+      "| id|   name|age|gender|math|science|english|\n",
+      "+---+-------+---+------+----+-------+-------+\n",
+      "|  1|  Alice| 20|     F|  66|     92|     44|\n",
+      "|  2|    Bob| 20|     M|  82|     52|     77|\n",
+      "|  3|Charlie| 22|     F|  43|     57|     76|\n",
+      "|  4|  David| 19|     M|  95|     69|     46|\n",
+      "|  5|    Eva| 19|     F|  62|     44|     96|\n",
+      "|  6|  Frank| 22|     F|  70|     78|     94|\n",
+      "|  7|  Grace| 24|     F|  67|     66|     93|\n",
+      "|  8|  Henry| 21|     F|  53|     82|     60|\n",
+      "|  9|    Ivy| 19|     M|  64|     52|     46|\n",
+      "| 10|   Jack| 19|     F|  44|     59|     60|\n",
+      "+---+-------+---+------+----+-------+-------+\n",
+      "only showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Step 2: Explore dataset\n",
+    "print(\"=== First 10 rows ===\")\n",
+    "df.show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "cd08a51b-ff89-4f83-8e5a-3062f734933a",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "=== Schema ===\n",
+      "root\n",
+      " |-- id: integer (nullable = true)\n",
+      " |-- name: string (nullable = true)\n",
+      " |-- age: integer (nullable = true)\n",
+      " |-- gender: string (nullable = true)\n",
+      " |-- math: integer (nullable = true)\n",
+      " |-- science: integer (nullable = true)\n",
+      " |-- english: integer (nullable = true)\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"=== Schema ===\")\n",
+    "df.printSchema()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "b94c847a-5fe5-419c-9b4f-e4c89488636f",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "=== Datatypes ===\n",
+      "[('id', 'int'), ('name', 'string'), ('age', 'int'), ('gender', 'string'), ('math', 'int'), ('science', 'int'), ('english', 'int')]\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"=== Datatypes ===\")\n",
+    "print(df.dtypes)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "0f5ae04d-d06d-4b98-abbf-6e4fde1a3936",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "=== Summary statistics ===\n",
+      "+-------+------------------+-----+------------------+------+------------------+------------------+-----------------+\n",
+      "|summary|                id| name|               age|gender|              math|           science|          english|\n",
+      "+-------+------------------+-----+------------------+------+------------------+------------------+-----------------+\n",
+      "|  count|                50|   50|                50|    50|                50|                50|               50|\n",
+      "|   mean|              25.5| NULL|              21.5|  NULL|             68.94|             70.16|            69.36|\n",
+      "| stddev|14.577379737113251| NULL|2.2337851101588404|  NULL|17.609610085034216|14.636214521186957|18.74507826560544|\n",
+      "|    min|                 1|Aaron|                18|     F|                40|                44|               42|\n",
+      "|    max|                50| Zoey|                25|     M|               100|                99|              100|\n",
+      "+-------+------------------+-----+------------------+------+------------------+------------------+-----------------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"=== Summary statistics ===\")\n",
+    "df.describe().show()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "75d3b754-48b5-4a64-b412-27d3a96efac3",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Total rows: 50\n",
+      "Columns: ['id', 'name', 'age', 'gender', 'math', 'science', 'english']\n"
+     ]
+    }
+   ],
+   "source": [
+    "print(\"Total rows:\", df.count())\n",
+    "print(\"Columns:\", df.columns)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "9303ac72-0cdb-46ed-aa24-c3686a06915e",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "=== Select name, age, and math columns ===\n",
+      "+-------+---+----+\n",
+      "|   name|age|math|\n",
+      "+-------+---+----+\n",
+      "|  Alice| 20|  66|\n",
+      "|    Bob| 20|  82|\n",
+      "|Charlie| 22|  43|\n",
+      "|  David| 19|  95|\n",
+      "|    Eva| 19|  62|\n",
+      "|  Frank| 22|  70|\n",
+      "|  Grace| 24|  67|\n",
+      "|  Henry| 21|  53|\n",
+      "|    Ivy| 19|  64|\n",
+      "|   Jack| 19|  44|\n",
+      "+-------+---+----+\n",
+      "only showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Step 3: Select specific columns\n",
+    "print(\"\\n=== Select name, age, and math columns ===\")\n",
+    "df.select(\"name\", \"age\", \"math\").show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "45b1a655-0fde-42b8-9d01-60f03067bc6e",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "=== Students with age >= 21 and math >= 70 ===\n",
+      "+---+-------+---+------+----+-------+-------+\n",
+      "| id|   name|age|gender|math|science|english|\n",
+      "+---+-------+---+------+----+-------+-------+\n",
+      "|  6|  Frank| 22|     F|  70|     78|     94|\n",
+      "| 11|  Kathy| 25|     M|  85|     71|     89|\n",
+      "| 12|    Leo| 24|     M|  97|     84|     83|\n",
+      "| 14| Nathan| 23|     F|  71|     66|     60|\n",
+      "| 22| Victor| 22|     M|  96|     75|     56|\n",
+      "| 25|   Yara| 21|     F| 100|     62|     54|\n",
+      "| 27|  Aaron| 25|     F|  81|     99|     44|\n",
+      "| 30|  Diana| 21|     M|  78|     89|     45|\n",
+      "| 35|    Ian| 21|     F|  72|     75|     70|\n",
+      "| 36|Jasmine| 21|     F|  90|     58|     71|\n",
+      "+---+-------+---+------+----+-------+-------+\n",
+      "only showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Step 4: Filter students (age >= 21 and math >= 70)\n",
+    "print(\"\\n=== Students with age >= 21 and math >= 70 ===\")\n",
+    "df.filter((col(\"age\") >= 21) & (col(\"math\") >= 70)).show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "ed50a495-41a0-4430-8458-148e11c9eca3",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "=== Dataset with new column 'average' ===\n",
+      "+---+-------+---+------+----+-------+-------+-------+\n",
+      "| id|   name|age|gender|math|science|english|average|\n",
+      "+---+-------+---+------+----+-------+-------+-------+\n",
+      "|  1|  Alice| 20|     F|  66|     92|     44|  67.33|\n",
+      "|  2|    Bob| 20|     M|  82|     52|     77|  70.33|\n",
+      "|  3|Charlie| 22|     F|  43|     57|     76|  58.67|\n",
+      "|  4|  David| 19|     M|  95|     69|     46|   70.0|\n",
+      "|  5|    Eva| 19|     F|  62|     44|     96|  67.33|\n",
+      "|  6|  Frank| 22|     F|  70|     78|     94|  80.67|\n",
+      "|  7|  Grace| 24|     F|  67|     66|     93|  75.33|\n",
+      "|  8|  Henry| 21|     F|  53|     82|     60|   65.0|\n",
+      "|  9|    Ivy| 19|     M|  64|     52|     46|   54.0|\n",
+      "| 10|   Jack| 19|     F|  44|     59|     60|  54.33|\n",
+      "+---+-------+---+------+----+-------+-------+-------+\n",
+      "only showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Step 5: Add a new column: average marks\n",
+    "df_with_avg = df.withColumn(\"average\", round((col(\"math\") + col(\"science\") + col(\"english\")) / 3, 2))\n",
+    "print(\"\\n=== Dataset with new column 'average' ===\")\n",
+    "df_with_avg.show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "2085414d-b8f3-46b2-b7be-6a005ba5112b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "=== Students with average >= 75 (sorted) ===\n",
+      "+---+------+---+------+----+-------+-------+-------+\n",
+      "| id|  name|age|gender|math|science|english|average|\n",
+      "+---+------+---+------+----+-------+-------+-------+\n",
+      "| 12|   Leo| 24|     M|  97|     84|     83|   88.0|\n",
+      "| 15|Olivia| 18|     M|  87|     90|     87|   88.0|\n",
+      "| 44|  Rita| 24|     M|  90|     82|     88|  86.67|\n",
+      "| 11| Kathy| 25|     M|  85|     71|     89|  81.67|\n",
+      "| 33|George| 22|     M|  66|     95|     84|  81.67|\n",
+      "|  6| Frank| 22|     F|  70|     78|     94|  80.67|\n",
+      "| 41| Oscar| 20|     M|  87|     72|     81|   80.0|\n",
+      "| 21|   Uma| 19|     F|  89|     70|     76|  78.33|\n",
+      "| 37|  Kyle| 21|     M|  57|     86|     92|  78.33|\n",
+      "| 39|  Matt| 25|     M|  64|     71|    100|  78.33|\n",
+      "+---+------+---+------+----+-------+-------+-------+\n",
+      "only showing top 10 rows\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Step 6: Filter students with average >= 75 and sort descending\n",
+    "print(\"\\n=== Students with average >= 75 (sorted) ===\")\n",
+    "df_with_avg.filter(col(\"average\") >= 75).orderBy(col(\"average\").desc()).show(10)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "42366a18-3b66-4210-893a-1cc0f1c27566",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "\n",
+      "=== Average marks by gender ===\n",
+      "+------+--------+-----------+-----------+-----------+\n",
+      "|gender|avg_math|avg_science|avg_english|overall_avg|\n",
+      "+------+--------+-----------+-----------+-----------+\n",
+      "|     F|   63.86|      68.55|      70.55|      67.66|\n",
+      "|     M|   75.95|      72.38|      67.71|      72.02|\n",
+      "+------+--------+-----------+-----------+-----------+\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# Step 7: Group by gender and calculate average marks\n",
+    "print(\"\\n=== Average marks by gender ===\")\n",
+    "df_with_avg.groupBy(\"gender\").agg(\n",
+    "    round(avg(\"math\"), 2).alias(\"avg_math\"),\n",
+    "    round(avg(\"science\"), 2).alias(\"avg_science\"),\n",
+    "    round(avg(\"english\"), 2).alias(\"avg_english\"),\n",
+    "    round(avg(\"average\"), 2).alias(\"overall_avg\")\n",
+    ").show()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3bf1e7e9-2cdc-46ed-abad-1d1c13636aff",
+   "metadata": {},
+   "source": [
+    "## Summary\n",
+    "### PySpark Operations\n",
+    "Here we performed the following key operations on the DataFrame:\n",
+    "\n",
+    "* Data Exploration: It displays the first 10 rows, prints the schema and data types, and shows summary statistics.\n",
+    "\n",
+    "* Column Selection: It selects specific columns like name, age, and math.\n",
+    "\n",
+    "* Filtering: It filters the data to find students with an age of 21 or older and a math score of 70 or higher.\n",
+    "\n",
+    "* Data Manipulation: It adds a new column named average by calculating the average of the math, science, and english scores.\n",
+    "\n",
+    "* Sorting and Filtering: It filters for students with an average score of 75 or higher and sorts them in descending order.\n",
+    "\n",
+    "* Aggregation: It groups the data by gender to calculate the average scores for each subject."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "2bf7a8d3-8100-4a2a-8016-be4bea5e726f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Stop Spark session\n",
+    "# spark.stop()"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.5"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
